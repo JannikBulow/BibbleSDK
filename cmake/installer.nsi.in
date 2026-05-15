@@ -1,0 +1,84 @@
+Unicode True
+Name "BibbleSDK @BIBBLE_SDK_VERSION@"
+OutFile "@BIBBLE_INSTALLER_OUT@"
+
+InstallDir "$PROGRAMFILES64\BibbleSDK"
+InstallDirRegKey HKLM "SOFTWARE\Bibble\SDK" "InstallDir"
+
+RequestExecutionLevel admin
+
+Page directory   ; Step 1 — directory picker, pre-filled with $INSTDIR above.
+Page instfiles   ; Step 2 — progress bar while files are copied.
+
+UninstPage uninstConfirm
+UninstPage instfiles
+
+Section
+    SetOutPath "$INSTDIR\bin"
+
+    File /r "@BIBBLE_INSTALL_STAGING@\bin\*.exe"
+
+    File /r /nonfatal "@BIBBLE_INSTALL_STAGING@\bin\*.dll"
+
+    SetOutPath "$INSTDIR"
+    File "@BIBBLE_INSTALL_STAGING@\sdk-version"
+
+    WriteRegStr HKLM "SOFTWARE\Bibble\SDK" "InstallDir" "$INSTDIR"
+    WriteRegStr HKLM "SOFTWARE\Bibble\SDK" "Version"    "@BIBBLE_SDK_VERSION@"
+
+    WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "DisplayName"     "BibbleSDK @BIBBLE_SDK_VERSION@"
+    WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "DisplayVersion"  "@BIBBLE_SDK_VERSION@"
+    WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "Publisher"       "Jannik Laugmand Bülow"
+
+    WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "UninstallString" "$INSTDIR\uninstall.exe"
+    WriteRegStr   HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "InstallLocation" "$INSTDIR"
+
+    WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "NoModify" 1
+    WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK" \
+                  "NoRepair" 1
+
+    WriteUninstaller "$INSTDIR\uninstall.exe"
+
+    ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
+
+    StrStr $1 "$0" "$INSTDIR\bin"
+
+    StrCmp $1 "" 0 path_already_set
+        WriteRegExpandStr HKLM \
+            "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" \
+            "Path" "$0;$INSTDIR\bin"
+
+        SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
+
+    path_already_set:
+
+SectionEnd
+
+Section "Uninstall"
+    RMDir /r "$INSTDIR\bin"
+
+    Delete "$INSTDIR\sdk-version"
+    Delete "$INSTDIR\uninstall.exe"
+
+    RMDir "$INSTDIR"
+
+    ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
+
+    ${StrRep} $1 "$0" ";$INSTDIR\bin" ""
+
+    WriteRegExpandStr HKLM \
+        "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" \
+        "Path" "$1"
+
+    SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
+
+    DeleteRegKey HKLM "SOFTWARE\BibbleVM\SDK"
+
+    DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK"
+SectionEnd

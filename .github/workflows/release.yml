@@ -1,0 +1,55 @@
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows SDK
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout BibbleSDK
+        uses: actions/checkout@v4
+
+      - name: Install NSIS
+        run: choco install nsis --no-progress -y
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          cmake -S . -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/staging" `
+            -DBIBBLE_SDK_VERSION="$version" `
+            -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Install into staging tree
+        run: cmake --install build --config Release
+
+      - name: Build installer
+        run: cmake --build build --config Release --target installer
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BibbleSDK-win64
+          path: build/BibbleSDK-*-win64.exe
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: BibbleSDK ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: build/BibbleSDK-*-win64.exe
+          body: |
+            ## BibbleSDK ${{ github.ref_name }}
+            
+            Run the `.exe` — it installs everything
+            and adds that to your system PATH automatically.
+            
+            Includes `basm.exe`, `bibble.exe`, and all required DLLs.
