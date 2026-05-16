@@ -27,6 +27,16 @@ file(GENERATE
     CONTENT "${BIBBLE_SDK_VERSION}\n"
 )
 
+install(
+    TARGETS BibbleVM-framework-shared BibbleVM-framework-static BibbleVM-native-interface BibbleVM-main
+            BibbleASM-framework-shared BibbleASM-framework-static BibbleASM-main
+            BibbleBytecode-shared BibbleBytecode-static
+    EXPORT BibbleSDKTargets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/sdk-version" DESTINATION .)
 
 include(cmake/Packaging.cmake)
