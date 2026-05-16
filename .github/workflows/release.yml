@@ -57,7 +57,7 @@ jobs:
           body: |
             ## BibbleSDK ${{ github.ref_name }}
             
-            Run the `.exe` — it installs everything
+            Run the `.exe`; it installs everything
             and adds that to your system PATH automatically.
             
             Includes `basm.exe`, `bibble.exe`, and all required DLLs.
