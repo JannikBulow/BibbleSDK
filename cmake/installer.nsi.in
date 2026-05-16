@@ -1,8 +1,18 @@
+!include "LogicLib.nsh"
+!include "WinMessages.nsh"
+!include "StrFunc.nsh"
+
+${StrStr}
+${StrRep}
+
+${UnStrStr}
+${UnStrRep}
+
 Unicode True
-Name "BibbleSDK @BIBBLE_SDK_VERSION@"
+Name "Bibble @BIBBLE_SDK_VERSION@"
 OutFile "@BIBBLE_INSTALLER_OUT@"
 
-InstallDir "$PROGRAMFILES64\BibbleSDK"
+InstallDir "$PROGRAMFILES64\Bibble"
 InstallDirRegKey HKLM "SOFTWARE\Bibble\SDK" "InstallDir"
 
 RequestExecutionLevel admin
@@ -16,9 +26,21 @@ UninstPage instfiles
 Section
     SetOutPath "$INSTDIR\bin"
 
-    File /r "@BIBBLE_INSTALL_STAGING@\bin\*.exe"
+    File "@BIBBLE_INSTALL_STAGING@\bin\basm.exe"
+    File "@BIBBLE_INSTALL_STAGING@\bin\bibble.exe"
 
-    File /r /nonfatal "@BIBBLE_INSTALL_STAGING@\bin\*.dll"
+    File "@BIBBLE_INSTALL_STAGING@\bin\basm.dll"
+    File "@BIBBLE_INSTALL_STAGING@\bin\bibble-bytecode.dll"
+    File "@BIBBLE_INSTALL_STAGING@\bin\bibblevm.dll"
+
+    SetOutPath "$INSTDIR\lib"
+
+    File "@BIBBLE_INSTALL_STAGING@\lib\basm.lib"
+    File "@BIBBLE_INSTALL_STAGING@\lib\basm-aio.lib"
+    File "@BIBBLE_INSTALL_STAGING@\lib\bibble-bytecode.lib"
+    File "@BIBBLE_INSTALL_STAGING@\lib\bibble-bytecode-aio.lib"
+    File "@BIBBLE_INSTALL_STAGING@\lib\bibblevm.lib"
+    File "@BIBBLE_INSTALL_STAGING@\lib\bibblevm-aio.lib"
 
     SetOutPath "$INSTDIR"
     File "@BIBBLE_INSTALL_STAGING@\sdk-version"
@@ -47,7 +69,7 @@ Section
 
     ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
 
-    StrStr $1 "$0" "$INSTDIR\bin"
+    ${StrStr} $1 "$0" "$INSTDIR\bin"
 
     StrCmp $1 "" 0 path_already_set
         WriteRegExpandStr HKLM \
@@ -70,7 +92,7 @@ Section "Uninstall"
 
     ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "Path"
 
-    ${StrRep} $1 "$0" ";$INSTDIR\bin" ""
+    ${UnStrRep} $1 "$0" ";$INSTDIR\bin" ""
 
     WriteRegExpandStr HKLM \
         "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" \
@@ -78,7 +100,7 @@ Section "Uninstall"
 
     SendMessage ${HWND_BROADCAST} ${WM_SETTINGCHANGE} 0 "STR:Environment" /TIMEOUT=1000
 
-    DeleteRegKey HKLM "SOFTWARE\BibbleVM\SDK"
+    DeleteRegKey HKLM "SOFTWARE\Bibble\SDK"
 
     DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\BibbleSDK"
 SectionEnd
